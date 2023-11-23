@@ -141,6 +141,15 @@ func determineRepos(o options, logger *logrus.Entry) []string {
 	return gatherModifiedRepos(o.releaseRepoPath, logger)
 }
 
+func isPromotingToOcp(orgRepo string) bool {
+	// Logic to parse ci-operator configuration for the repository
+	// and check if it has a promotion stanza with namespace: ocp
+	// Return true if it does, false otherwise
+
+	// Example return statement (update with actual logic)
+	return false
+}
+
 func checkRepos(repos []string, bots []string, ignore sets.Set[string], client automationClient, logger *logrus.Entry, configAgent *plugins.ConfigAgent) ([]string, error) {
 	logger.Infof("checking %d repo(s): %s", len(repos), strings.Join(repos, ", "))
 	failing := sets.New[string]()
@@ -182,6 +191,17 @@ func checkRepos(repos []string, bots []string, ignore sets.Set[string], client a
 			repoLogger.Errorf("bots that are not collaborators: %s", strings.Join(missingBots, ", "))
 		} else {
 			repoLogger.Info("all bots are org members or repo collaborators")
+		}
+
+		if isPromotingToOcp(orgRepo) {
+			hasIssues, err := checkGitHubIssuesEnabled(org, repo, client)
+			if err != nil {
+				// handle error, potentially logging and continuing
+			}
+			if !hasIssues {
+				failing.Insert(orgRepo)
+				repoLogger.Error("GitHub issues are not enabled for repo")
+			}
 		}
 
 		appInstalled, err := client.IsAppInstalled(org, repo)
